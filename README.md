@@ -4,6 +4,12 @@
 ## Description
 This project is designed to manage annotations using AWS services. It utilizes Terraform for infrastructure management and JavaScript for the application logic.
 
+For the frontend, I chose vanilla JavaScript to minimize dependencies and keep the application lightweight. This approach provided straightforward integration with Potree while avoiding unnecessary framework overhead—since the project requirements didn't demand complex state management or features that would justify the added complexity of a frontend library.
+On the backend, I leveraged AWS Lambda functions for their cost-effectiveness, scalability, and ease of deployment. To expose these functions, I configured API Gateway with an HTTP API rather than a REST API. Since the project requirements specified no authentication needs, the HTTP API provides a more cost-efficient solution while fully meeting all functional requirements.
+This architecture delivers an optimized balance between simplicity, performance, and cost.
+
+
+
 ## Prerequisites
 - Terraform installed on your machine
 - AWS account with appropriate permissions
