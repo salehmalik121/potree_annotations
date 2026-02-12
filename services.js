@@ -1,5 +1,5 @@
 import { postAnnotation,deleteAnnotation,updateAnnotation } from "./api.js";
-import { baseURL, inputArray, markerArray,sviewer } from "./shared.js";
+import { inputArray, markerArray, sviewer, incrementAnnotationCount, decrementAnnotationCount } from "./shared.js";
 import * as THREE from "../libs/three.js/build/three.module.js";
 
 export const addAnnotation = (data, cloudPoint) => {
@@ -11,6 +11,7 @@ export const addAnnotation = (data, cloudPoint) => {
             "onclick": async function (a) {
                 await deleteAnnotation(data.id);
                 cloudPoint.removeAnnotation(a.annotation);
+                decrementAnnotationCount();
             }
         } , 
         {
@@ -44,6 +45,8 @@ export const annotationInputFactory = (anchor, viewer, sceneLion,isUpdate=false,
 
     // input box for annotation title
     annotationInput.value = isUpdate ? previousData.title : "";
+    annotationInput.placeholder = "Add an annotation title";
+    annotationInput.maxLength = 256;
     annotationInput.focus();
     annotationInput.id = 'ant-input'
     annotationInput.addEventListener("click", (event) => {
@@ -83,6 +86,9 @@ export const annotationInputFactory = (anchor, viewer, sceneLion,isUpdate=false,
         }
         cleanIntermediateInput(viewer);
         addAnnotation(data, sceneLion);
+        if (!isUpdate) {
+            incrementAnnotationCount();
+        }
     })
 
     // cancel button
