@@ -1,11 +1,5 @@
-import { postAnnotation, deleteAnnotation, updateAnnotation } from "./api.js";
-import {
-    inputArray,
-    markerArray,
-    sviewer,
-    upsertAnnotationInList,
-    removeAnnotationFromList
-} from "./shared.js";
+import { postAnnotation,deleteAnnotation,updateAnnotation } from "./api.js";
+import { inputArray, markerArray, sviewer, incrementAnnotationCount, decrementAnnotationCount } from "./shared.js";
 import * as THREE from "../libs/three.js/build/three.module.js";
 
 export const addAnnotation = (data, cloudPoint, syncPanel = false) => {
@@ -13,20 +7,20 @@ export const addAnnotation = (data, cloudPoint, syncPanel = false) => {
         title: data.title,
         actions: [
             {
-                icon: Potree.resourcePath + "/icons/remove.svg",
-                onclick: async function (a) {
-                    await deleteAnnotation(data.id);
-                    cloudPoint.removeAnnotation(a.annotation);
-                    removeAnnotationFromList(data.id);
-                }
-            },
-            {
-                icon: Potree.resourcePath + "/icons/copy.svg",
-                onclick: function (a) {
-                    cleanIntermediateInput(sviewer);
-                    cloudPoint.removeAnnotation(a.annotation);
-                    annotationInputFactory(a.annotation.position, sviewer, cloudPoint, true, data);
-                }
+            "icon": Potree.resourcePath + "/icons/remove.svg",
+            "onclick": async function (a) {
+                await deleteAnnotation(data.id);
+                cloudPoint.removeAnnotation(a.annotation);
+                decrementAnnotationCount();
+            }
+        } , 
+        {
+            "icon": Potree.resourcePath + "/icons/copy.svg",
+            "onclick": function (a) {
+                cleanIntermediateInput(sviewer);
+                cloudPoint.removeAnnotation(a.annotation);
+                console.log(a.annotation)
+                annotationInputFactory(a.annotation.position, sviewer, cloudPoint, true, data);
             }
         ]
     });
@@ -90,8 +84,11 @@ export const annotationInputFactory = (anchor, viewer, sceneLion, isUpdate = fal
         }
 
         cleanIntermediateInput(viewer);
-        addAnnotation(data, sceneLion, true);
-    });
+        addAnnotation(data, sceneLion);
+        if (!isUpdate) {
+            incrementAnnotationCount();
+        }
+    })
 
     annotationCancelButton.innerText = "Cancel";
     annotationCancelButton.id = "cancel-btn";
