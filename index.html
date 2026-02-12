@@ -20,11 +20,158 @@
 			height: 100%;
 			margin: 0;
 			overflow: hidden;
+			font-family: "Inter", "Segoe UI", Roboto, sans-serif;
 		}
 
 		#potree_container {
 			width: 100%;
 			height: 100%;
+		}
+
+		#app_hud {
+			position: fixed;
+			top: 16px;
+			left: 16px;
+			z-index: 1000;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			color: #f7fbff;
+			pointer-events: none;
+		}
+
+		.hud-card {
+			background: rgba(5, 16, 30, 0.74);
+			backdrop-filter: blur(8px);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 12px;
+			padding: 10px 14px;
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+			max-width: 340px;
+		}
+
+		#hud_title {
+			font-size: 14px;
+			font-weight: 700;
+			letter-spacing: 0.02em;
+		}
+
+		#hud_subtitle {
+			font-size: 12px;
+			opacity: 0.8;
+			margin-top: 4px;
+		}
+
+		.hud-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			font-size: 12px;
+		}
+
+		#annotation_count {
+			background: linear-gradient(135deg, #2ad3ff, #5d88ff);
+			padding: 4px 10px;
+			border-radius: 999px;
+			font-weight: 700;
+			font-size: 12px;
+		}
+
+		#input-div {
+			display: flex;
+			gap: 8px;
+			padding: 8px;
+			background: rgba(7, 14, 24, 0.86);
+			border: 1px solid rgba(255, 255, 255, 0.25);
+			border-radius: 10px;
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+		}
+
+		#ant-input {
+			background: rgba(255, 255, 255, 0.92);
+			border: 1px solid #d5ddf0;
+			border-radius: 8px;
+			padding: 6px 10px;
+			min-width: 220px;
+		}
+
+		#save-btn,
+		#cancel-btn {
+			border: none;
+			border-radius: 8px;
+			padding: 6px 10px;
+			font-weight: 600;
+			cursor: pointer;
+		}
+
+		#save-btn {
+			background: #2ed48d;
+			color: #052716;
+		}
+
+		#cancel-btn {
+			background: #f4f6fa;
+			color: #1f2d4a;
+		}
+
+
+		#annotations_panel {
+			position: fixed;
+			right: 16px;
+			top: 16px;
+			bottom: 16px;
+			width: 320px;
+			z-index: 1000;
+			background: rgba(6, 18, 32, 0.82);
+			backdrop-filter: blur(8px);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 12px;
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+			display: flex;
+			flex-direction: column;
+			color: #f7fbff;
+			overflow: hidden;
+		}
+
+		#annotations_panel_header {
+			padding: 12px 14px;
+			font-size: 13px;
+			font-weight: 700;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+		}
+
+		#annotations_list {
+			list-style: none;
+			margin: 0;
+			padding: 10px;
+			overflow-y: auto;
+			flex: 1;
+		}
+
+		#annotations_empty {
+			padding: 12px 14px;
+			font-size: 12px;
+			opacity: 0.8;
+		}
+
+		.annotation-item {
+			padding: 10px;
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			border-radius: 8px;
+			background: rgba(255, 255, 255, 0.05);
+			margin-bottom: 8px;
+		}
+
+		.annotation-item-title {
+			font-size: 12px;
+			font-weight: 600;
+			margin-bottom: 4px;
+		}
+
+		.annotation-item-meta {
+			font-size: 11px;
+			opacity: 0.8;
 		}
 	</style>
 </head>
@@ -35,6 +182,24 @@
 		</div>
 		<div id="potree_sidebar_container"> </div>
 	</div>
+
+	<div id="app_hud">
+		<div class="hud-card">
+			<div id="hud_title">Potree Annotation Studio</div>
+			<div id="hud_subtitle">Click anywhere on the cloud to create notes and collaborate faster.</div>
+		</div>
+		<div class="hud-card hud-row">
+			<span>Total annotations</span>
+			<span id="annotation_count">0</span>
+		</div>
+	</div>
+
+	<div id="annotations_panel">
+		<div id="annotations_panel_header">Annotations</div>
+		<div id="annotations_empty">No annotations yet.</div>
+		<ul id="annotations_list"></ul>
+	</div>
+
 
 	<script src="../libs/jquery/jquery-3.1.1.min.js"></script>
 	<script src="../libs/spectrum/spectrum.js"></script>
