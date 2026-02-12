@@ -22,6 +22,7 @@ export const addAnnotation = (data, cloudPoint, syncPanel = false) => {
                 console.log(a.annotation)
                 annotationInputFactory(a.annotation.position, sviewer, cloudPoint, true, data);
             }
+        }
         ]
     });
 
