@@ -1,7 +1,7 @@
 		import * as THREE from "../libs/three.js/build/three.module.js";
-		import { loadAnnotations,postAnnotation } from "./api.js";
+		import { loadAnnotations } from "./api.js";
 		import  {addAnnotation , annotationInputFactory, cleanIntermediateInput, reCalibratePixels} from "./services.js";
-		import { baseURL , inputArray , markerArray, setViewer } from "./shared.js";
+		import { inputArray, setViewer, setAnnotationCount } from "./shared.js";
 
 		let isDown = false;
 
@@ -38,6 +38,7 @@
 			data.forEach(annotations => {
 				addAnnotation(annotations, sceneLion);
 			});
+			setAnnotationCount(data.length);
 
 			viewer.fitToScreen();
 		});
