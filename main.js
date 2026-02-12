@@ -1,92 +1,91 @@
-		import * as THREE from "../libs/three.js/build/three.module.js";
-		import { loadAnnotations,postAnnotation } from "./api.js";
-		import  {addAnnotation , annotationInputFactory, cleanIntermediateInput, reCalibratePixels} from "./services.js";
-		import { baseURL , inputArray , markerArray, setViewer } from "./shared.js";
+import * as THREE from "../libs/three.js/build/three.module.js";
+import { loadAnnotations } from "./api.js";
+import { addAnnotation, annotationInputFactory, cleanIntermediateInput, reCalibratePixels } from "./services.js";
+import { inputArray, setViewer, setAnnotationsList, setAnnotationInteractionHandlers } from "./shared.js";
 
-		let isDown = false;
+let isDown = false;
 
+const viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
 
-		const viewer = new Potree.Viewer(
-			document.getElementById("potree_render_area")
-		);
+viewer.setEDLEnabled(true);
+viewer.setFOV(60);
+viewer.setPointBudget(1_000_000);
+viewer.setBackground("skybox");
+viewer.loadSettingsFromURL();
 
-		
+let sceneLion = new Potree.Scene();
 
-		viewer.setEDLEnabled(true);
-		viewer.setFOV(60);
-		viewer.setPointBudget(1_000_000);
-		viewer.setBackground("skybox");
-		viewer.loadSettingsFromURL();
+viewer.setScene(sceneLion);
+setViewer(viewer);
 
+const focusAnnotation = (annotation) => {
+    const [x, y, z] = annotation.cordinates || [];
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+        return;
+    }
 
-		let sceneLion = new Potree.Scene();
+    const target = new THREE.Vector3(x, y, z);
+    const currentPosition = viewer.scene.view.position.clone();
+    const direction = currentPosition.clone().sub(target).normalize();
+    const distance = Math.max(currentPosition.distanceTo(target), 3.5);
+    const nextPosition = target.clone().add(direction.multiplyScalar(distance * 0.45));
 
-		viewer.setScene(sceneLion);
-		// loading point cloud lion
-		Potree.loadPointCloud("./cloudpoint/cloud.js", "lion", async function (e) {
+    viewer.scene.view.position.copy(nextPosition);
+    viewer.scene.view.lookAt(target);
+};
 
-			// setting scene lion view and adding point cloud to scene
-			sceneLion.addPointCloud(e.pointcloud);
-			sceneLion.view.position.set(4.15, -6.12, 8.54);
-			sceneLion.view.lookAt(new THREE.Vector3(0, -0.098, 4.23));
-			e.pointcloud.material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+setAnnotationInteractionHandlers({ onFocus: focusAnnotation });
 
-			// load annotaions from dynomoDB via API Gateway
-			const data = await loadAnnotations();
-			
-			// then we are looping in api when screen loading and adding annotations to screen
-			data.forEach(annotations => {
-				addAnnotation(annotations, sceneLion);
-			});
+Potree.loadPointCloud("./cloudpoint/cloud.js", "lion", async function (e) {
+    sceneLion.addPointCloud(e.pointcloud);
+    sceneLion.view.position.set(4.15, -6.12, 8.54);
+    sceneLion.view.lookAt(new THREE.Vector3(0, -0.098, 4.23));
+    e.pointcloud.material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
 
-			viewer.fitToScreen();
-		});
+    const data = await loadAnnotations();
 
+    data.forEach((annotation) => {
+        addAnnotation(annotation, sceneLion);
+    });
 
+    setAnnotationsList(data);
+    viewer.fitToScreen();
+});
 
-		// Event Listeners for Click , Mouse Down , Mouse Up , Mouse Move , Wheel
+document.addEventListener("click", (event) => {
+    if (isDown) {
+        return;
+    }
 
-		// When Click Event is Fired we will create input bar at the point clicked
-		document.addEventListener("click", (event) => {
+    const mouse = new THREE.Vector2(event.clientX, event.clientY);
+    const point = Potree.Utils.getMousePointCloudIntersection(
+        mouse,
+        viewer.scene.getActiveCamera(),
+        viewer,
+        viewer.scene.pointclouds,
+        { pickClipped: false }
+    );
 
-			console.log("click event");
+    if (point) {
+        cleanIntermediateInput(viewer);
+        annotationInputFactory(point.location, viewer, sceneLion);
+    }
+});
 
-			if (isDown) {
-				return;
-			}
+document.addEventListener("mousedown", () => {
+    isDown = true;
+});
 
-			const mouse = new THREE.Vector2(event.clientX, event.clientY);
-			let point = Potree.Utils.getMousePointCloudIntersection(
-				mouse,
-				viewer.scene.getActiveCamera(),
-				viewer,
-				viewer.scene.pointclouds,
-				{ pickClipped: false }
-			)
-			const anchor = point.location;
-			if (point != null) {
-				cleanIntermediateInput(viewer);
-				annotationInputFactory(anchor,viewer,sceneLion);
-			}
+document.addEventListener("mouseup", () => {
+    isDown = false;
+});
 
+document.addEventListener("mousemove", (event) => {
+    if (isDown && inputArray.length !== 0) {
+        reCalibratePixels(event, viewer);
+    }
+});
 
-		});
-
-		document.addEventListener("mousedown", (event) => {
-			isDown = true;
-		})
-		document.addEventListener("mouseup", (event) => {
-			isDown = false;
-		})
-
-		document.addEventListener("mousemove", (event) => {
-			if (isDown && inputArray.length != 0) {
-				reCalibratePixels(event, viewer);
-			}
-		})
-
-		document.addEventListener("wheel", (event) => {
-			reCalibratePixels(event)
-		})
-
-		setViewer(viewer);
+document.addEventListener("wheel", (event) => {
+    reCalibratePixels(event, viewer);
+});
