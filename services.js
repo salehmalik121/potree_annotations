@@ -37,18 +37,17 @@ export const addAnnotation = (data, cloudPoint, syncPanel = false) => {
 };
 
 export const annotationInputFactory = (anchor, viewer, sceneLion, isUpdate = false, previousData = null) => {
-    let annotaitonActionContainer = document.createElement("div");
+    let annotationActionContainer = document.createElement("div");
     let annotationInput = document.createElement("input");
     let annotationSaveButton = document.createElement("button");
     let annotationCancelButton = document.createElement("button");
 
-    annotaitonActionContainer.id = "input-div";
-    annotaitonActionContainer.style.display = "flex";
-    annotaitonActionContainer.appendChild(annotationInput);
-    annotaitonActionContainer.appendChild(annotationSaveButton);
-    annotaitonActionContainer.appendChild(annotationCancelButton);
-    annotaitonActionContainer.style.position = "absolute";
-    annotaitonActionContainer.style.zIndex = "100";
+    annotationActionContainer.id = "input-div";
+    annotationActionContainer.appendChild(annotationInput);
+    annotationActionContainer.appendChild(annotationSaveButton);
+    annotationActionContainer.appendChild(annotationCancelButton);
+    annotationActionContainer.style.position = "absolute";
+    annotationActionContainer.style.zIndex = "100";
 
     annotationInput.value = isUpdate ? previousData.title : "";
     annotationInput.placeholder = "Add an annotation title";
@@ -59,14 +58,18 @@ export const annotationInputFactory = (anchor, viewer, sceneLion, isUpdate = fal
         event.stopPropagation();
     });
 
-    annotationInput.addEventListener("input", (event) => {
-        const length = new TextEncoder().encode(event.target.value).length;
-        if (length > 256) {
-            annotationInput.style.border = "2px solid red";
-            annotationSaveButton.disabled = true;
-        } else {
-            annotationInput.style.border = "1px solid #d5ddf0";
-            annotationSaveButton.disabled = false;
+    const validateInput = () => {
+        const bytes = new TextEncoder().encode(annotationInput.value.trim()).length;
+        const isInvalid = bytes === 0 || bytes > 256;
+        annotationSaveButton.disabled = isInvalid;
+        annotationInput.style.border = isInvalid ? "2px solid #ff5c7a" : "1px solid #d5ddf0";
+        return !isInvalid;
+    };
+
+    annotationInput.addEventListener("input", validateInput);
+    annotationInput.addEventListener("keydown", async (event) => {
+        if (event.key === "Enter" && validateInput()) {
+            annotationSaveButton.click();
         }
     });
 
@@ -75,9 +78,14 @@ export const annotationInputFactory = (anchor, viewer, sceneLion, isUpdate = fal
 
     annotationSaveButton.addEventListener("click", async (event) => {
         event.stopPropagation();
+
+        if (!validateInput()) {
+            return;
+        }
+
         const data = {
             id: Date.now().toString(),
-            title: document.getElementById("ant-input").value,
+            title: annotationInput.value.trim(),
             cordinates: [anchor.x, anchor.y, anchor.z],
             description: "nil"
         };
@@ -104,11 +112,12 @@ export const annotationInputFactory = (anchor, viewer, sceneLion, isUpdate = fal
         }
     });
 
-    document.body.append(annotaitonActionContainer);
+    document.body.append(annotationActionContainer);
+    validateInput();
 
     const p = anchor.clone().project(viewer.scene.getActiveCamera());
-    annotaitonActionContainer.style.left = (p.x * 0.5 + 0.5) * window.innerWidth + "px";
-    annotaitonActionContainer.style.top = (-p.y * 0.5 + 0.5) * window.innerHeight + "px";
+    annotationActionContainer.style.left = (p.x * 0.5 + 0.5) * window.innerWidth + "px";
+    annotationActionContainer.style.top = (-p.y * 0.5 + 0.5) * window.innerHeight + "px";
     inputArray.push(anchor);
 
     const geometry = new THREE.SphereGeometry(0.05, 16, 16);
@@ -117,23 +126,24 @@ export const annotationInputFactory = (anchor, viewer, sceneLion, isUpdate = fal
 
     sphere.position.copy(anchor);
     viewer.scene.scene.add(sphere);
-
     markerArray.push(sphere);
 };
 
 export const cleanIntermediateInput = (viewer) => {
-    let inputDiv = document.getElementById("input-div");
+    const inputDiv = document.getElementById("input-div");
     if (inputDiv) {
         inputDiv.remove();
-        let marker = markerArray.pop();
-        viewer.scene.scene.remove(marker);
+        const marker = markerArray.pop();
+        if (marker) {
+            viewer.scene.scene.remove(marker);
+        }
     }
     inputArray.pop();
 };
 
 export const reCalibratePixels = (event, viewer) => {
     const anchor = inputArray[0];
-    let input = document.getElementById("input-div");
+    const input = document.getElementById("input-div");
     if (!anchor || !input) {
         return;
     }

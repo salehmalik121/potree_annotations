@@ -1,7 +1,7 @@
 import * as THREE from "../libs/three.js/build/three.module.js";
 import { loadAnnotations } from "./api.js";
 import { addAnnotation, annotationInputFactory, cleanIntermediateInput, reCalibratePixels } from "./services.js";
-import { inputArray, setViewer, setAnnotationsList } from "./shared.js";
+import { inputArray, setViewer, setAnnotationsList, setAnnotationInteractionHandlers } from "./shared.js";
 
 let isDown = false;
 
@@ -16,6 +16,26 @@ viewer.loadSettingsFromURL();
 let sceneLion = new Potree.Scene();
 
 viewer.setScene(sceneLion);
+setViewer(viewer);
+
+const focusAnnotation = (annotation) => {
+    const [x, y, z] = annotation.cordinates || [];
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+        return;
+    }
+
+    const target = new THREE.Vector3(x, y, z);
+    const currentPosition = viewer.scene.view.position.clone();
+    const direction = currentPosition.clone().sub(target).normalize();
+    const distance = Math.max(currentPosition.distanceTo(target), 3.5);
+    const nextPosition = target.clone().add(direction.multiplyScalar(distance * 0.45));
+
+    viewer.scene.view.position.copy(nextPosition);
+    viewer.scene.view.lookAt(target);
+};
+
+setAnnotationInteractionHandlers({ onFocus: focusAnnotation });
+
 Potree.loadPointCloud("./cloudpoint/cloud.js", "lion", async function (e) {
     sceneLion.addPointCloud(e.pointcloud);
     sceneLion.view.position.set(4.15, -6.12, 8.54);
@@ -27,8 +47,8 @@ Potree.loadPointCloud("./cloudpoint/cloud.js", "lion", async function (e) {
     data.forEach((annotation) => {
         addAnnotation(annotation, sceneLion);
     });
-    setAnnotationsList(data);
 
+    setAnnotationsList(data);
     viewer.fitToScreen();
 });
 
@@ -38,7 +58,7 @@ document.addEventListener("click", (event) => {
     }
 
     const mouse = new THREE.Vector2(event.clientX, event.clientY);
-    let point = Potree.Utils.getMousePointCloudIntersection(
+    const point = Potree.Utils.getMousePointCloudIntersection(
         mouse,
         viewer.scene.getActiveCamera(),
         viewer,
@@ -46,7 +66,7 @@ document.addEventListener("click", (event) => {
         { pickClipped: false }
     );
 
-    if (point != null) {
+    if (point) {
         cleanIntermediateInput(viewer);
         annotationInputFactory(point.location, viewer, sceneLion);
     }
@@ -61,7 +81,7 @@ document.addEventListener("mouseup", () => {
 });
 
 document.addEventListener("mousemove", (event) => {
-    if (isDown && inputArray.length != 0) {
+    if (isDown && inputArray.length !== 0) {
         reCalibratePixels(event, viewer);
     }
 });
@@ -69,5 +89,3 @@ document.addEventListener("mousemove", (event) => {
 document.addEventListener("wheel", (event) => {
     reCalibratePixels(event, viewer);
 });
-
-setViewer(viewer);

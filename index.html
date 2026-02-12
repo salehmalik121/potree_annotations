@@ -174,6 +174,55 @@
 			opacity: 0.8;
 		}
 
+
+		#annotations_panel_toolbar {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 8px;
+			padding: 10px;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+		}
+
+		.annotation-control {
+			background: rgba(255, 255, 255, 0.9);
+			border: 1px solid #ccd4e6;
+			border-radius: 6px;
+			padding: 6px 8px;
+			font-size: 12px;
+		}
+
+		#export_annotations_btn {
+			grid-column: span 2;
+			background: linear-gradient(135deg, #48e2b7, #3f91ff);
+			color: #052036;
+			font-weight: 700;
+			border: none;
+			cursor: pointer;
+		}
+
+		#annotations_panel_info {
+			padding: 8px 12px;
+			font-size: 11px;
+			opacity: 0.8;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		}
+
+		.annotation-item-actions {
+			display: flex;
+			gap: 6px;
+			margin-top: 8px;
+		}
+
+		.annotation-mini-btn {
+			border: 1px solid rgba(255, 255, 255, 0.35);
+			background: rgba(255, 255, 255, 0.08);
+			color: #e7f4ff;
+			font-size: 11px;
+			padding: 4px 8px;
+			border-radius: 999px;
+			cursor: pointer;
+		}
+
 		@media (max-width: 1080px) {
 			#annotations_panel {
 				width: 260px;
@@ -188,7 +237,15 @@
 			}
 
 			#ant-input {
-				min-width: 180px;
+				min-width: 160px;
+			}
+
+			#annotations_panel_toolbar {
+				grid-template-columns: 1fr;
+			}
+
+			#export_annotations_btn {
+				grid-column: span 1;
 			}
 		}
 	</style>
@@ -214,6 +271,18 @@
 
 	<div id="annotations_panel">
 		<div id="annotations_panel_header">Annotations</div>
+		<div id="annotations_panel_toolbar">
+			<input id="annotations_search" class="annotation-control" type="text" placeholder="Search title or id" />
+			<select id="annotations_sort" class="annotation-control">
+				<option value="newest">Newest first</option>
+				<option value="oldest">Oldest first</option>
+				<option value="title">Title A-Z</option>
+			</select>
+			<button id="export_annotations_btn" class="annotation-control">Export annotations JSON</button>
+		</div>
+		<div id="annotations_panel_info">
+			<span id="visible_annotations_count">0 shown</span>
+		</div>
 		<div id="annotations_empty">No annotations yet.</div>
 		<ul id="annotations_list"></ul>
 	</div>
